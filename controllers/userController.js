@@ -7,7 +7,7 @@ export const getAllUser = async (req, res) => {
 
         // Check admin access  
         const findUser = await userModel.findById(id);
-        console.log(findUser.role);
+        
         if (findUser.role !== 'super admin') {
             return res.status(403).json({ message: "Only admins can perform this action." });
         }

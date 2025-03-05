@@ -158,7 +158,7 @@ Thank you for registering with the Health Monitor System! To complete your regis
             html: `
   <p>Dear ${username},</p>
   <p>Thank you for registering with the Health Monitor System! To complete your registration and activate your account, please verify your email by clicking the button below:</p>
-  <a href="${verifyLink}" style="display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background-color: skyblue; text-decoration: none; border-radius: 5px;">Activate Account</a>
+  <a href="${verifyLink}" style="display: inline-block; mx: auto; padding: 6px 20px; font-size: 16px; color: white; background-color: #0b6fc0; text-decoration: none; border-radius: 5px;">Activate Account</a>
   <p>If you did not sign up for an account, please ignore this email.</p>
   <p>For any assistance, feel free to contact our support team.</p>
   <p>Best regards,<br>Health Monitor System Team</p>
