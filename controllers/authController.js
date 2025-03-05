@@ -107,7 +107,8 @@ export const loginUser = async (req, res) => {
                 last_name: user.last_name,
                 contact_no: user.contact_no,
                 email: user.email,
-                isActive: user.isActive
+                isActive: user.isActive,
+                role: user.role,
             }
         });
 
