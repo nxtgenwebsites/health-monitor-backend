@@ -133,7 +133,7 @@ export const userVerifyByEmail = async (req, res) => {
             { expiresIn: "1d" } // Token valid for 1 day
         );
 
-        const verifyLink = `http://localhost:3000/api/verify?token=${token}`;
+        const verifyLink = `https://health-monitor-backend.vercel.app/api/verify?token=${token}`;
 
         // Setup email transporter
         const transporter = nodemailer.createTransport({
