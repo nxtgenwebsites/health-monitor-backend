@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import userModel from '../models/userModel.js'
 import nodemailer from 'nodemailer'
 
-export const signupUser   = async (req, res) => {
+export const signupUser = async (req, res) => {
     try {
         const { title, username, name, email, password, middle_name, last_name } = req.body;
 
@@ -202,5 +202,107 @@ export const verifyUser = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: "Invalid or expired token" });
+    }
+};
+
+// Forgot Password API
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await userModel.findOne({ $or: [{ email: email }, { username: email }] });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Generate Random Temporary Password
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const hashedTempPassword = await bcrypt.hash(tempPassword, 10);
+
+        user.password = hashedTempPassword;
+        await user.save();
+
+        // Send Email with Reset Link
+        const resetLink = `https://health-monitor-system-production.vercel.app//new-password.html?email=${user.email}`;
+
+        const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+                user: "shahbazansari8199@gmail.com",
+                pass: 'nyaj zfxg ktjr iztq'
+            },
+        });
+
+        await transporter.sendMail({
+            from: process.env.EMAIL,
+            to: user.email,
+            subject: '🔑 Reset Your Password – Health Monitor System',
+            html: `<p>Dear ${user.username},</p>
+
+<p>We received a request to reset your password for the Health Monitor System. To help you regain access, we have generated a temporary password for you.</p>
+
+<p><strong>Your Temporary Password:</strong> ${tempPassword}</p>
+
+<p>Please use this temporary password to log in to your account and update your password immediately for security reasons.</p>
+
+<p>
+  <a href="${resetLink}" style="display: inline-block; mx: auto; padding: 6px 20px; font-size: 16px; color: white; background-color: #0b6fc0; text-decoration: none; border-radius: 5px;">
+    Login & Update Password
+  </a>
+</p>
+
+<p>If you did not request a password reset, please ignore this email or contact our support team if you suspect any unauthorized access.</p>
+
+<p>Best regards,<br>Health Monitor System Team</p>
+`
+        });
+
+        res.status(200).json({
+            message: 'Temporary password sent to your email',
+            user: { id: user._id, email: user.email }
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Reset Password API
+export const resetPassword = async (req, res) => {
+    try {
+        const { id, tempPassword, newPassword } = req.body;
+
+        const user = await userModel.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        console.log("User from Database:", user);
+        console.log("User's Hashed Password:", user.password);
+
+        // Check if tempPassword exists in the request
+        if (!tempPassword || !user.password) {
+            return res.status(400).json({ message: "Password required" });
+        }
+
+        // Verify Current Password (Compare with user.password)
+        const isMatch = await bcrypt.compare(tempPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Wrong password" });
+        }
+
+        // Hash New Password
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedNewPassword;  // Update password
+        await user.save();  // Save updated password
+
+        res.status(200).json({ message: "Password successfully reset" });
+
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
