@@ -73,7 +73,7 @@ export const loginUser = async (req, res) => {
         }
 
         const user = await userModel.findOne({
-            $or: [{ email }, { username }]
+            $or: [{ email: email }, { username: email }]
         });
 
         if (!user) {
@@ -103,11 +103,7 @@ export const loginUser = async (req, res) => {
             token,
             user: {
                 id: user._id,
-                title: user.title,
-                name: user.name,
-                middle_name: user.middle_name,
-                last_name: user.last_name,
-                contact_no: user.contact_no,
+                username: user.username,
                 email: user.email,
                 isActive: user.isActive,
                 role: user.role,
