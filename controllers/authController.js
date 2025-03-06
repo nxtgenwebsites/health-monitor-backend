@@ -72,12 +72,14 @@ export const loginUser = async (req, res) => {
             return res.status(400).json({ message: "Email and password are required." });
         }
 
-        const user = await userModel.findOne({ email });
-        
+        const user = await userModel.findOne({
+            $or: [{ email }, { username }]
+        });
+
         if (!user) {
             return res.status(400).json({ message: "User not found." });
         }
-        
+
         if (user.isBlocked) {
             return res.status(403).json({ message: "Your account is banned by the admin." });
         }
@@ -150,7 +152,7 @@ export const userVerifyByEmail = async (req, res) => {
         const info = await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: email,
-            subject: `Welcome to Health Monitor System – Verify Your Email`,
+            subject: `Verification Email - Welcome to Health Monitor System`,
             text: `Dear ${username},
 
 Thank you for registering with the Health Monitor System! To complete your registration and activate your account, please verify your email by clicking the button below:`,
@@ -198,7 +200,7 @@ export const verifyUser = async (req, res) => {
         await user.save();
 
         // ✅ Redirect to frontend dashboard
-        return res.redirect(`http://127.0.0.1:5500/account-verified.html`);
+        return res.redirect(`https://health-monitor-system-production.vercel.app/account-verified.html`);
         res.send('a')
 
     } catch (error) {
