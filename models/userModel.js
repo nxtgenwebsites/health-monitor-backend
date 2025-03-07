@@ -3,15 +3,12 @@ import mongoose from "mongoose";
 const userSchema = mongoose.Schema({
     title:{
         type: String,
-        required: true
     },
     username: {
         type: String,
-        required: true
     },
     name:{
         type: String,
-        required: true
     },
     middle_name:{
         type: String,
@@ -21,11 +18,78 @@ const userSchema = mongoose.Schema({
     },
     email:{
         type: String,
-        required: true
     },
     password:{
         type: String,
-        required: true
+    },
+    gender:{
+        type: String,
+    },
+    nationality:{
+        type: String,
+    },
+    marital_status:{
+        type: String,
+    },
+    dob:{
+        type: String,
+    },
+    relationship:{
+        type: String,
+    },
+    contact_no:{
+        type: String,
+    },
+    education_level:{
+        type: String,
+    },
+    password:{
+        type: String,
+    },
+    employment_status:{
+        type: String,
+    },
+    country:{
+        type: String,
+    },
+    state:{
+        type: String,
+    },
+    city:{
+        type: String,
+    },
+    town:{
+        type: String,
+    },
+    address:{
+        type: String,
+    },
+    children_no:{
+        type: String,
+    },
+    children_number:{
+        type: String,
+    },
+    children_gender:{
+        type: String,
+    },
+    children_dob:{
+        type: String,
+    },
+    kin_relationship:{
+        type: String,
+    },
+    kin_name:{
+        type: String,
+    },
+    kin_gender:{
+        type: String,
+    },
+    kin_email:{
+        type: String,
+    },
+    notes:{
+        type: String,
     },
     role: {
         type: String,
@@ -33,11 +97,9 @@ const userSchema = mongoose.Schema({
     },
     isBlocked: {
         type: Boolean,
-        default: false,
     },
     isActive: {
         type: Boolean,
-        default: false,
     }
 }, { timestamps : true})
 

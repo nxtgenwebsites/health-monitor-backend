@@ -197,7 +197,6 @@ export const verifyUser = async (req, res) => {
 
         // ✅ Redirect to frontend dashboard
         return res.redirect(`https://health-monitor-system-production.vercel.app/account-verified.html`);
-        res.send('a')
 
     } catch (error) {
         console.log(error);

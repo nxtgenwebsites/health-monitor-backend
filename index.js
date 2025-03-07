@@ -5,6 +5,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js'
+import profileRouter from './routes/profileRoutes.js'
 
 dotenv.config();
 connectDB()
@@ -18,6 +19,7 @@ app.use(cors())
 
 app.use('/api/', authRoutes)
 app.use('/api', userRoutes)
+app.use('/api/profile', profileRouter)
 
 app.listen(port ,() => {
     console.log(`Server is up and running at http://localhost:${port}`);
