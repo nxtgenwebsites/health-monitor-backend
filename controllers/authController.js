@@ -260,7 +260,7 @@ export const forgotPassword = async (req, res) => {
 
         res.status(200).json({
             message: 'Temporary password sent to your email',
-            user: { id: user._id, email: user.email }
+            user: { id: user._id, email: user.email  , tempPassword: tempPassword}
         });
 
     } catch (error) {

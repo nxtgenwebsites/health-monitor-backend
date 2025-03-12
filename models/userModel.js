@@ -1,5 +1,13 @@
 import mongoose from "mongoose";
 
+const nextOfKinSchema = new mongoose.Schema({
+    kin_name: { type: String},
+    kin_relationship: { type: String},
+    kin_gender: { type: String},
+    kin_email: { type: String},
+    kin_contact_no: { type: String},
+}, { _id: false });
+
 const userSchema = mongoose.Schema({
     title:{
         type: String,
@@ -68,7 +76,7 @@ const userSchema = mongoose.Schema({
         type: String,
     },
     children_number:{
-        type: String,
+        type: Number,
     },
     children_gender:{
         type: String,
@@ -76,18 +84,7 @@ const userSchema = mongoose.Schema({
     children_dob:{
         type: String,
     },
-    kin_relationship:{
-        type: String,
-    },
-    kin_name:{
-        type: String,
-    },
-    kin_gender:{
-        type: String,
-    },
-    kin_email:{
-        type: String,
-    },
+    next_of_kin: [nextOfKinSchema],
     notes:{
         type: String,
     },
