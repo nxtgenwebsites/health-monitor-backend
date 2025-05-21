@@ -16,17 +16,11 @@ export const signupUser = async (req, res) => {
             return res.status(400).json({ message: "User with this email already exists" });
         }
 
-        const existingUsername = await userModel.findOne({ username });
-        if (existingUsername) {
-            return res.status(400).json({ message: "User with this username already exists" });
-        }
-
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         const newUser = new userModel({
             title,
-            username,
             name,
             middle_name,
             last_name,
@@ -48,7 +42,6 @@ export const signupUser = async (req, res) => {
             user: {
                 id: newUser._id,
                 title: newUser.title,
-                username: newUser.username,
                 name: newUser.name,
                 middle_name: newUser.middle_name,
                 last_name: newUser.last_name,

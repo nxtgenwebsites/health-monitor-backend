@@ -12,9 +12,6 @@ const userSchema = mongoose.Schema({
     title:{
         type: String,
     },
-    username: {
-        type: String,
-    },
     name:{
         type: String,
     },
@@ -97,6 +94,7 @@ const userSchema = mongoose.Schema({
     },
     isActive: {
         type: Boolean,
+        default: false
     }
 }, { timestamps : true})
 
