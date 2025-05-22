@@ -202,7 +202,7 @@ export const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
 
-        const user = await userModel.findOne({ $or: [{ email: email }, { username: email }] });
+        const user = await userModel.findOne({ $or: [{ email: email }] });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -231,7 +231,7 @@ export const forgotPassword = async (req, res) => {
             from: process.env.EMAIL,
             to: user.email,
             subject: '🔑 Reset Your Password – Health Monitor System',
-            html: `<p>Dear ${user.username},</p>
+            html: `<p>Dear ${user.name},</p>
 
 <p>We received a request to reset your password for the Health Monitor System. To help you regain access, we have generated a temporary password for you.</p>
 
