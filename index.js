@@ -6,6 +6,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import profileRouter from './routes/profileRoutes.js'
+import hospitalRoutes from './routes/hospitalRoutes.js'
 
 dotenv.config();
 connectDB()
@@ -20,6 +21,7 @@ app.use(cors())
 app.use('/api/', authRoutes)
 app.use('/api', userRoutes)
 app.use('/api/profile', profileRouter)
+app.use("/api/hospitals", hospitalRoutes);
 
 app.listen(port ,() => {
     console.log(`Server is up and running at http://localhost:${port}`);
