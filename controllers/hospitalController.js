@@ -3,65 +3,87 @@ import Hospital from "../models/hospitalModel.js";
 import multer from "multer";
 import { Readable } from "stream";
 import fetch from "node-fetch";
+import xlsx from "xlsx"; // Excel parser
 // Memory storage (file save nahi hogi)
 const storage = multer.memoryStorage();
 export const upload = multer({ storage });
 
-// Upload CSV aur DB me save
 export const uploadCSV = async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ message: "CSV file required" });
+        if (!req.file) {
+            return res.status(400).json({ message: "File required (CSV or Excel)" });
+        }
 
         const results = [];
-        const stream = Readable.from(req.file.buffer.toString());
+        const fileBuffer = req.file.buffer;
 
-        stream
-            .pipe(csv())
-            .on("data", (row) => {
-                const lat = parseFloat(row.Latitude);
-                const lon = parseFloat(row.Longitude);
+        let rows = [];
 
-                // ✅ Only push rows with valid coordinates
-                if (!isNaN(lat) && !isNaN(lon)) {
-                    results.push({
-                        country: row.Country,
-                        state: row.State,
-                        lga_region: row["LGA/Region"],
-                        town: row.Town,
-                        city: row.City,
-                        neighbourhood: row.Neighbourhood,
-                        facility_name: row.Facility_Name,
-                        address: row.Address,
-                        hours: row.Hours,
-                        phone_number: row.PhoneNumber,
-                        website: row.Website,
-                        contact_name: row.Contact_Name,
-                        services: row.Services,  // you can split by comma if needed
-                        place_id: row.PlaceID,
-                        source: row.Source,
-                        location: {
-                            type: "Point",
-                            coordinates: [lon, lat] // GeoJSON format: [longitude, latitude]
-                        }
-                    });
-                }
-            })
-            .on("end", async () => {
-                if (results.length === 0) {
-                    return res.status(400).json({ message: "No valid rows found in CSV" });
-                }
+        if (req.file.originalname.endsWith(".xlsx")) {
+            // ✅ Excel file parse
+            const workbook = xlsx.read(fileBuffer, { type: "buffer" });
+            const sheetName = workbook.SheetNames[0];
+            rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        } else {
+            // ✅ CSV file parse
+            rows = await new Promise((resolve, reject) => {
+                const temp = [];
+                const stream = Readable.from(fileBuffer.toString());
 
-                await Hospital.insertMany(results);
-                res.status(200).json({
-                    message: "CSV data uploaded successfully",
-                    count: results.length
-                });
+                stream
+                    .pipe(csv())
+                    .on("data", (row) => temp.push(row))
+                    .on("end", () => resolve(temp))
+                    .on("error", (err) => reject(err));
             });
+        }
+
+        // ✅ Clean & save rows
+        rows.forEach((row) => {
+            const lat = parseFloat(row.Latitude);
+            const lon = parseFloat(row.Longitude);
+
+            if (!isNaN(lat) && !isNaN(lon)) {
+                results.push({
+                    country: row.Country || "",
+                    state: row.State || "",
+                    lga_region: row["LGA/Region"] || "",
+                    town: row.Town || "",
+                    city: row.City || "",
+                    neighbourhood: row.Neighbourhood || "",
+                    facility_name: row.Facility_Name || "",
+                    address: row.Address || "",
+                    hours: row.Hours || "",
+                    phone_number: row.PhoneNumber || "",
+                    website: row.Website || "",
+                    contact_name: row.Contact_Name || "",
+                    services: row.Services || "",
+                    place_id: row.PlaceID || "",
+                    source: row.Source || "",
+                    location: {
+                        type: "Point",
+                        coordinates: [lon, lat],
+                    },
+                });
+            }
+        });
+
+        if (results.length === 0) {
+            return res.status(400).json({ message: "No valid rows found (lat/lon missing)" });
+        }
+
+        await Hospital.insertMany(results);
+
+        res.status(200).json({
+            message: "Data uploaded successfully",
+            count: results.length,
+        });
+
     } catch (err) {
         console.error(err);
         res.status(500).json({
-            message: "Error uploading CSV",
-            error: err.message
+            message: "Error uploading file",
+            error: err.message,
         });
     }
 };
@@ -69,7 +91,8 @@ export const uploadCSV = async (req, res) => {
 // ✅ Get hospitals in user’s country (auto-detect from lat/lon)
 export const getNearbyHospitals = async (req, res) => {
     try {
-        const { latitude, longitude } = req.query;
+        const { latitude, longitude, page = 1, limit = 20 } = req.query;
+
         if (!latitude || !longitude) {
             return res.status(400).json({
                 message: "latitude and longitude required",
@@ -88,16 +111,13 @@ export const getNearbyHospitals = async (req, res) => {
                     },
                 }
             );
-              
 
             if (!geoRes.ok) {
                 throw new Error("Unable to geocode (bad response)");
             }
 
             const geoData = await geoRes.json();
-
             userCountry = geoData?.address?.country;
-            
         } catch (geoErr) {
             return res.status(400).json({
                 message: "Unable to detect country from coordinates",
@@ -111,16 +131,45 @@ export const getNearbyHospitals = async (req, res) => {
             });
         }
 
-        // ✅ Find hospitals in detected country
-        const hospitals = await Hospital.find({ country: userCountry });
+        // ✅ Pagination calculation
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        // ✅ Total hospitals in that country
+        const totalHospitals = await Hospital.countDocuments({ country: userCountry });
+
+        // ✅ GeoNear aggregation (distance + country filter + pagination)
+        const hospitals = await Hospital.aggregate([
+            {
+                $geoNear: {
+                    near: {
+                        type: "Point",
+                        coordinates: [parseFloat(longitude), parseFloat(latitude)],
+                    },
+                    distanceField: "distance", // distance in meters
+                    spherical: true,
+                    query: { country: userCountry }, // ✅ only this country
+                },
+            },
+            { $skip: skip },
+            { $limit: parseInt(limit) },
+        ]);
 
         if (!hospitals.length) {
-            return res.json({ message: `No hospitals found in ${userCountry}` });
+            return res.json({
+                message: `No hospitals found in ${userCountry} for this page`,
+                country: userCountry,
+                totalHospitals,
+                page: parseInt(page),
+                totalPages: Math.ceil(totalHospitals / limit),
+                hospitals: [],
+            });
         }
 
         res.json({
             country: userCountry,
-            count: hospitals.length,
+            totalHospitals,
+            page: parseInt(page),
+            totalPages: Math.ceil(totalHospitals / limit),
             hospitals,
         });
     } catch (err) {
