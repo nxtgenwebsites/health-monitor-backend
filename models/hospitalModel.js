@@ -1,15 +1,26 @@
 import mongoose from "mongoose";
 
 const hospitalSchema = new mongoose.Schema({
-    name: String,
-    type: String,
-    country: String,
-    state: String,
-    city: String,
-    number: String,
+    country: { type: String, required: true },
+    state: { type: String },
+    lga_region: { type: String },   // LGA / Region
+    town: { type: String },
+    city: { type: String },
+    neighbourhood: { type: String },
+    facility_name: { type: String, required: true },
+    address: { type: String },
+    hours: { type: String },
+    phone_number: { type: String },
+    website: { type: String },
+    contact_name: { type: String },
+    services: { type: String },   // e.g. Hospitals, Pharmacies, Labs, etc.
+    place_id: { type: String },
+    source: { type: String },
+
+    // GeoJSON location (keep as it is ✅)
     location: {
         type: { type: String, default: "Point" },
-        coordinates: { type: [Number], required: true }
+        coordinates: { type: [Number], required: true } // [longitude, latitude]
     }
 });
 
