@@ -179,3 +179,58 @@ export const getNearbyHospitals = async (req, res) => {
         });
     }
 };
+
+// ✅ Find hospitals by filters (country required)
+export const findHospitalsBySearch = async (req, res) => {
+    try {
+        let { country, state, city, service } = req.body;
+        const { page = 1, limit = 20 } = req.query;
+
+        // ✅ Country required
+        if (!country || country.trim() === "") {
+            return res.status(400).json({
+                message: "Country is required",
+            });
+        }
+
+        // ✅ Convert all to lowercase safely
+        country = country.trim().toLowerCase();
+        if (state) state = state.trim().toLowerCase();
+        if (city) city = city.trim().toLowerCase();
+        if (service) service = service.trim().toLowerCase();
+
+        // ✅ Build filters (only non-empty fields)
+        const filters = {};
+        if (country) filters.country = new RegExp(`^${country}$`, "i"); // exact match, case-insensitive
+        if (state && state !== "") filters.state = new RegExp(`^${state}$`, "i");
+        if (city && city !== "") filters.city = new RegExp(`^${city}$`, "i");
+        if (service && service !== "") filters.services = new RegExp(service, "i"); // partial match
+
+        // ✅ Pagination calculation
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        // ✅ Count total
+        const totalHospitals = await Hospital.countDocuments(filters);
+
+        // ✅ Fetch hospitals with pagination
+        const hospitals = await Hospital.find(filters)
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        // ✅ Response
+        res.json({
+            filters,
+            totalHospitals,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(totalHospitals / limit),
+            hospitals,
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: "Error fetching hospitals",
+            error: err.message,
+        });
+    }
+};
+  
